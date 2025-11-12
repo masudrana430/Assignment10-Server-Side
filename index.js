@@ -91,12 +91,22 @@ async function run() {
 
     });
 
-    //latest 6 data
+    // latest 6 issues (newest first)
     app.get('/latest-issues', async (req, res) => {
-      const results = await IssuesCollection.find().sort({ date: 'asc' }).limit(6).toArray();
-      console.log(results);
-      res.send(results);
+      try {
+        const results = await IssuesCollection
+          .find()
+          .sort({ createdAt: -1, date: -1 }) // fallback to `date` if needed
+          .limit(6)
+          .toArray();
+
+        res.send(results);
+      } catch (e) {
+        console.error(e);
+        res.status(500).send({ message: 'Failed to load latest issues' });
+      }
     });
+
 
     app.get('/my-issues', verifyToken, async (req, res) => {
       const email = req.query.email;
