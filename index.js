@@ -104,19 +104,69 @@ async function run() {
       res.send(result);
     });
 
-    // my-contribution
-    app.post('/contribution', async (req, res) => {
-      const data = req.body;
-      const result = await ContributionCollection.insertOne(data);
-      res.send(result);
+    // // my-contribution
+    // app.post('/contribution', async (req, res) => {
+    //   const data = req.body;
+    //   const result = await ContributionCollection.insertOne(data);
+    //   res.send(result);
 
-    });
+    // });
 
     app.get('/my-contribution', verifyToken, async (req, res) => {
       const email = req.query.email;
       const result = await ContributionCollection.find({ contribute_by: email }).toArray();
       res.send(result);
     });
+
+    // List contributions for an issue
+    app.get('/contributions', async (req, res) => {
+      try {
+        const { issueId } = req.query;
+        const filter = issueId ? { issueId: String(issueId) } : {};
+        const docs = await ContributionCollection.find(filter)
+          .sort({ createdAt: -1 })
+          .toArray();
+        res.send(docs.map(d => ({ ...d, _id: d._id.toString() })));
+      } catch (e) {
+        console.error(e);
+        res.status(500).send({ message: 'Failed to fetch contributions' });
+      }
+    });
+
+    // (Optional) safer create — ensures required fields exist
+    app.post('/contribution', async (req, res) => {
+      try {
+        const {
+          issueId, issueTitle, amount, contributorName,
+          email, phone, address, note, avatar
+        } = req.body || {};
+
+        if (!issueId || !issueTitle || !amount || !email) {
+          return res.status(400).send({ success: false, message: 'Missing required fields' });
+        }
+
+        const doc = {
+          issueId: String(issueId),
+          issueTitle: String(issueTitle),
+          amount: Number(amount) || 0,
+          contributorName: String(contributorName || 'Anonymous'),
+          email: String(email).toLowerCase(),
+          phone: String(phone || ''),
+          address: String(address || ''),
+          note: String(note || ''),
+          avatar: String(avatar || ''),
+          createdAt: new Date(),
+          date: new Date(),
+        };
+
+        const result = await ContributionCollection.insertOne(doc);
+        res.status(201).send({ success: true, _id: result.insertedId.toString() });
+      } catch (e) {
+        console.error(e);
+        res.status(500).send({ success: false, message: 'Failed to create contribution' });
+      }
+    });
+
 
 
 
@@ -189,10 +239,10 @@ async function run() {
     });
 
 
-    
 
 
-    
+
+
 
 
 
