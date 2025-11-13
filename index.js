@@ -114,13 +114,13 @@ async function run() {
       res.send(result);
     });
 
-    // // my-contribution
-    // app.post('/contribution', async (req, res) => {
-    //   const data = req.body;
-    //   const result = await ContributionCollection.insertOne(data);
-    //   res.send(result);
+    // my-contribution
+    app.post('/contribution', async (req, res) => {
+      const data = req.body;
+      const result = await ContributionCollection.insertOne(data);
+      res.send(result);
 
-    // });
+    });
 
     // app.get('/my-contribution', verifyToken, async (req, res) => {
     //   const email = req.query.email;
@@ -128,20 +128,20 @@ async function run() {
     //   res.send(result);
     // });
 
-    // // List contributions for an issue
-    // app.get('/contributions', async (req, res) => {
-    //   try {
-    //     const { issueId } = req.query;
-    //     const filter = issueId ? { issueId: String(issueId) } : {};
-    //     const docs = await ContributionCollection.find(filter)
-    //       .sort({ createdAt: -1 })
-    //       .toArray();
-    //     res.send(docs.map(d => ({ ...d, _id: d._id.toString() })));
-    //   } catch (e) {
-    //     console.error(e);
-    //     res.status(500).send({ message: 'Failed to fetch contributions' });
-    //   }
-    // });
+    // List contributions for an issue
+    app.get('/contributions', async (req, res) => {
+      try {
+        const { issueId } = req.query;
+        const filter = issueId ? { issueId: String(issueId) } : {};
+        const docs = await ContributionCollection.find(filter)
+          .sort({ createdAt: -1 })
+          .toArray();
+        res.send(docs.map(d => ({ ...d, _id: d._id.toString() })));
+      } catch (e) {
+        console.error(e);
+        res.status(500).send({ message: 'Failed to fetch contributions' });
+      }
+    });
 
     // My contributions: only the logged-in user's data
     app.get('/my-contribution', verifyToken, async (req, res) => {
