@@ -122,28 +122,71 @@ async function run() {
 
     // });
 
-    app.get('/my-contribution', verifyToken, async (req, res) => {
-      const email = req.query.email;
-      const result = await ContributionCollection.find({ contribute_by: email }).toArray();
-      res.send(result);
-    });
+    // app.get('/my-contribution', verifyToken, async (req, res) => {
+    //   const email = req.query.email;
+    //   const result = await ContributionCollection.find({ contribute_by: email }).toArray();
+    //   res.send(result);
+    // });
 
-    // List contributions for an issue
-    app.get('/contributions', async (req, res) => {
+    // // List contributions for an issue
+    // app.get('/contributions', async (req, res) => {
+    //   try {
+    //     const { issueId } = req.query;
+    //     const filter = issueId ? { issueId: String(issueId) } : {};
+    //     const docs = await ContributionCollection.find(filter)
+    //       .sort({ createdAt: -1 })
+    //       .toArray();
+    //     res.send(docs.map(d => ({ ...d, _id: d._id.toString() })));
+    //   } catch (e) {
+    //     console.error(e);
+    //     res.status(500).send({ message: 'Failed to fetch contributions' });
+    //   }
+    // });
+
+    // My contributions: only the logged-in user's data
+    app.get('/my-contribution', verifyToken, async (req, res) => {
       try {
-        const { issueId } = req.query;
-        const filter = issueId ? { issueId: String(issueId) } : {};
-        const docs = await ContributionCollection.find(filter)
+        // 1) Get email from query (?email=...)
+        const emailFromQuery = (req.query.email || '').toLowerCase();
+
+        if (!emailFromQuery) {
+          return res
+            .status(400)
+            .send({ message: 'Email query parameter is required' });
+        }
+
+        // 2) (Optional but safer) – if your verifyToken puts email on req.decoded,
+        //    make sure token email matches query email
+        const tokenEmail = req.decoded?.email
+          ? String(req.decoded.email).toLowerCase()
+          : null;
+
+        if (tokenEmail && tokenEmail !== emailFromQuery) {
+          return res.status(403).send({ message: 'Forbidden: email mismatch' });
+        }
+
+        // 3) Find contributions for this email
+        const docs = await ContributionCollection.find({
+          email: emailFromQuery, // <-- matches your POST /contribution field
+        })
           .sort({ createdAt: -1 })
           .toArray();
-        res.send(docs.map(d => ({ ...d, _id: d._id.toString() })));
-      } catch (e) {
-        console.error(e);
-        res.status(500).send({ message: 'Failed to fetch contributions' });
+
+        // 4) Normalize _id to string
+        const result = docs.map((d) => ({
+          ...d,
+          _id: d._id.toString(),
+        }));
+
+        res.send(result);
+      } catch (err) {
+        console.error('Error in /my-contribution:', err);
+        res.status(500).send({ message: 'Failed to fetch your contributions' });
       }
     });
 
-    // (Optional) safer create — ensures required fields exist
+
+
     app.post('/contribution', async (req, res) => {
       try {
         const {
@@ -160,7 +203,7 @@ async function run() {
           issueTitle: String(issueTitle),
           amount: Number(amount) || 0,
           contributorName: String(contributorName || 'Anonymous'),
-          email: String(email).toLowerCase(),
+          email: String(email).toLowerCase(),   // <-- this is what we filter on
           phone: String(phone || ''),
           address: String(address || ''),
           note: String(note || ''),
@@ -176,6 +219,7 @@ async function run() {
         res.status(500).send({ success: false, message: 'Failed to create contribution' });
       }
     });
+
 
 
 
