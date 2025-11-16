@@ -8,7 +8,7 @@ const serviceAccount = require("./sarviceKey.json");
 const app = express()
 const port = 3000
 app.use(cors({
-  origin: ['http://localhost:5173', 'https://b12-a10-masud.netlify.app'],
+  origin: ['http://localhost:5173', 'https://b12-a10-masud.netlify.app' ,'https://a09-category-rose.web.app'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
@@ -291,23 +291,6 @@ async function run() {
         res.status(500).send({ success: false, error: 'Failed to delete issue' });
       }
     });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
     // Send a ping to confirm a successful connection
